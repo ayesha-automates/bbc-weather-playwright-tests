@@ -9,12 +9,9 @@ test('search for Manchester weather', async ({ page }) => {
 
   await searchBox.fill('Manchester');
 
-  await page.getByRole('button', {
-    name: 'Search',
-    exact: true
-  }).click();
+ await searchBox.press('Enter');
 
-  await page.getByRole('link', {
+ await page.getByRole('link', {
     name: 'Manchester Airport, Manchester'
   }).click();
 
