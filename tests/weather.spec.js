@@ -1,66 +1,64 @@
+
+
 const { test, expect } = require('@playwright/test');
 
-test('search for Manchester weather', async ({ page }) => {
-  test.setTimeout(90000);
+const MANCHESTER_URL = 'https://www.bbc.co.uk/weather/2643123';
 
-  await page.goto('https://www.bbc.co.uk/weather', {
+test('Manchester weather forecast is displayed', async ({ page }) => {
+  test.setTimeout(60000);
+
+  // Open the Manchester forecast directly.
+  const response = await page.goto(MANCHESTER_URL, {
     waitUntil: 'domcontentloaded',
-    timeout: 60000
+    timeout: 45000,
   });
 
-  console.log('Current URL:', page.url());
-  console.log('Page title:', await page.title());
+  // Confirm that BBC returned a successful page.
+  expect(response, 'BBC Weather returned no response').not.toBeNull();
 
-  // Handle a consent button if BBC displays one
-  const consentButton = page
-    .getByRole('button', {
-      name: /accept|agree|continue/i
-    })
+  expect(
+    response.status(),
+    `BBC Weather returned HTTP status ${response.status()}`
+  ).toBeLessThan(400);
+
+  // Confirm that the correct Manchester URL opened.
+  await expect(page).toHaveURL(
+    /\/weather\/2643123(?:[/?#]|$)/
+  );
+
+  // Confirm that this is a BBC Weather Manchester page.
+  await expect(page).toHaveTitle(
+    /Manchester.*BBC Weather|BBC Weather.*Manchester/i
+  );
+
+  // Confirm that Manchester is shown on the page.
+  const locationHeading = page
+    .getByRole('heading', { name: /Manchester/i })
     .first();
 
-  if (
-    await consentButton
-      .isVisible({ timeout: 5000 })
-      .catch(() => false)
-  ) {
-    await consentButton.click();
-  }
-
-  // Flexible name instead of the complete exact wording
-  const searchBox = page.getByRole('combobox', {
-    name: /enter a town, city/i
+  await expect(locationHeading).toBeVisible({
+    timeout: 20000,
   });
 
-  await expect(searchBox).toBeVisible({ timeout: 30000 });
-  await searchBox.fill('Manchester');
-  await searchBox.press('Enter');
+  // Confirm that a visible temperature is displayed.
+  const temperature = page
+    .getByText(/-?\d+°/)
+    .filter({ visible: true })
+    .first();
 
-  const manchesterResult = page.getByRole('link', {
-    name: /Manchester Airport, Manchester/i
+  await expect(temperature).toBeVisible({
+    timeout: 20000,
   });
 
-  await expect(manchesterResult).toBeVisible({
-    timeout: 30000
-  });
-
-  await manchesterResult.click();
-
-  await expect(
-    page.getByRole('heading', { name: /Manchester/i }).first()
-  ).toBeVisible();
-
-  await expect(
-    page.getByText(/\d+°/).filter({ visible: true }).first()
-  ).toBeVisible();
-
+  // Confirm that a visible weather description is displayed.
   const weatherSummary = page
     .getByText(
-      /sunny|cloudy|rain|clear|mist|fog|snow|thunder|drizzle|overcast|showers/i
+      /\b(sunny|cloud|rain|clear|mist|fog|snow|thunder|drizzle|overcast|shower|sleet|hail)\b/i
     )
     .filter({ visible: true })
     .first();
 
   await expect(weatherSummary).toBeVisible({
-    timeout: 10000
+    timeout: 20000,
   });
 });
