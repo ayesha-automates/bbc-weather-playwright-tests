@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { WeatherPage } = require('../pages/WeatherPage');
 
 const cities = [
   { name: 'Manchester', id: '2643123' },
@@ -9,26 +10,19 @@ const cities = [
 
 for (const city of cities) {
   test(`${city.name} weather forecast is displayed`, async ({ page }) => {
-    const url = `https://www.bbc.co.uk/weather/${city.id}`;
+    const weatherPage = new WeatherPage(page);
 
-    const response = await page.goto(url, {
-      waitUntil: 'domcontentloaded',
-      timeout: 45000,
-    });
+    const response = await weatherPage.openCity(city.id);
 
     expect(response).not.toBeNull();
     expect(response.status()).toBeLessThan(400);
 
-    await expect(page).toHaveURL(
-      new RegExp(`/weather/${city.id}`)
-    );
+    await expect(
+      weatherPage.locationHeading(city.name)
+    ).toBeVisible();
 
     await expect(
-      page.getByRole('heading', { name: new RegExp(city.name, 'i') }).first()
-    ).toBeVisible({ timeout: 20000 });
-
-    await expect(
-      page.getByText(/-?\d+°/).filter({ visible: true }).first()
-    ).toBeVisible({ timeout: 20000 });
+      weatherPage.temperature()
+    ).toBeVisible();
   });
 }
