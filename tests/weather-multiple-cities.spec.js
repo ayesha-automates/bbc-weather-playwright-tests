@@ -1,12 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const { WeatherPage } = require('../pages/WeatherPage');
-
-const cities = [
-  { name: 'Manchester', id: '2643123' },
-  { name: 'London', id: '2643743' },
-  { name: 'Birmingham', id: '2655603' },
-  { name: 'Liverpool', id: '2644210' },
-];
+const { cities } = require('../test-data/cities');
 
 for (const city of cities) {
   test(`${city.name} weather forecast is displayed`, async ({ page }) => {
