@@ -17,12 +17,24 @@ for (const city of cities) {
     expect(response).not.toBeNull();
     expect(response.status()).toBeLessThan(400);
 
+    await expect(page).toHaveURL(
+      new RegExp(`/weather/${city.id}`)
+    );
+
+    await expect(page).toHaveTitle(
+      new RegExp(`${city.name}.*BBC Weather|BBC Weather.*${city.name}`, 'i')
+    );
+
     await expect(
       weatherPage.locationHeading(city.name)
     ).toBeVisible();
 
     await expect(
       weatherPage.temperature()
+    ).toBeVisible();
+
+    await expect(
+      weatherPage.weatherSummary()
     ).toBeVisible();
   });
 }
