@@ -27,3 +27,11 @@ npx playwright show-report
 ## CI Testing
 
 GitHub Actions automatically runs the tests whenever new code is pushed.
+
+## Technologies Used
+
+- Playwright
+- JavaScript
+- Node.js
+- Git and GitHub
+- GitHub Actions
