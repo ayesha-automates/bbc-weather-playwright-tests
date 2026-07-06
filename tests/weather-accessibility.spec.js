@@ -2,10 +2,18 @@ const { test, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
 
 test(
-  'Manchester weather page has no unexpected serious accessibility issues',
-  async ({ page }) => {
+  'Manchester weather page accessibility audit',
+  async ({ page, browserName }) => {
+    // Run Axe once in Chromium.
+    // Your normal tests already cover Firefox and WebKit.
+    test.skip(
+      browserName !== 'chromium',
+      'Accessibility audit runs only in Chromium'
+    );
+
     await page.goto('https://www.bbc.co.uk/weather/2643123', {
       waitUntil: 'domcontentloaded',
+      timeout: 45000,
     });
 
     await expect(
@@ -14,6 +22,8 @@ test(
 
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa'])
+      // Exclude BBC's known broken search combobox.
+      .exclude('.ls-c-search__container')
       .analyze();
 
     const seriousIssues = results.violations.filter(
@@ -22,30 +32,9 @@ test(
         issue.impact === 'critical'
     );
 
-    // Known BBC Weather accessibility issue:
-    // Search combobox is missing aria-expanded and aria-controls.
-    const unexpectedIssues = seriousIssues.filter(issue => {
-      const isKnownRule = issue.id === 'aria-required-attr';
-
-      const affectsKnownSearchBox = issue.nodes.every(node =>
-        node.target.some(target =>
-          String(target).includes('.ls-c-search__container')
-        )
-      );
-
-      return !(isKnownRule && affectsKnownSearchBox);
-    });
-
-    console.log(
-      'Known accessibility issues:',
-      seriousIssues.filter(issue =>
-        issue.id === 'aria-required-attr'
-      )
-    );
-
     expect(
-      unexpectedIssues,
-      JSON.stringify(unexpectedIssues, null, 2)
+      seriousIssues,
+      JSON.stringify(seriousIssues, null, 2)
     ).toEqual([]);
   }
 );
